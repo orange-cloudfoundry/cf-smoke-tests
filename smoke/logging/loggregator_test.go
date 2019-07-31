@@ -31,6 +31,8 @@ var _ = Describe("Loggregator:", func() {
 				if !useExistingApp {
 					appName = generator.PrefixedRandomName("SMOKES", "APP")
 					Expect(cf.Cf("push", appName, "-b", testConfig.RubyBuildpack, "-p", smoke.SimpleRubyAppBitsPath, "-d", testConfig.AppsDomain).Wait(testConfig.GetPushTimeout())).To(Exit(0))
+				} else {
+					appName = testConfig.LoggingApp
 				}
 			})
 
