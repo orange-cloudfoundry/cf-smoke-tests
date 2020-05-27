@@ -40,6 +40,8 @@ type Config struct {
 	EnableWindowsTests          bool   `json:"enable_windows_tests"`
 	WindowsStack                string `json:"windows_stack"`
 	EnableIsolationSegmentTests bool   `json:"enable_isolation_segment_tests"`
+	RubyBuildpack               string `json:"ruby_buildpack"`
+	BinaryBuildpack             string `json:"binary_buildpack"`
 
 	TimeoutScale           *float64 `json:"timeout_scale"`
 	IsolationSegmentName   string   `json:"isolation_segment_name"`
@@ -200,6 +202,8 @@ func newDefaultConfig() *Config {
 		Cleanup:            true,
 		EnableWindowsTests: false,
 		WindowsStack:       "windows2012R2",
+		RubyBuildpack:      "ruby_buildpack",
+		BinaryBuildpack:    "binary_buildpack",
 	}
 }
 

@@ -89,7 +89,7 @@ var _ = Describe("RoutingIsolationSegments", func() {
 			Eventually(cf.Cf(
 				"push", appName,
 				"-p", binaryAppBitsPath,
-				"-b", "binary_buildpack",
+				"-b", testConfig.BinaryBuildpack,
 				"-m", "30M",
 				"-k", "16M",
 				"-d", appsDomain,
@@ -131,7 +131,7 @@ var _ = Describe("RoutingIsolationSegments", func() {
 			Eventually(cf.Cf(
 				"push", appName,
 				"-p", binaryAppBitsPath,
-				"-b", "binary_buildpack",
+				"-b", testConfig.BinaryBuildpack,
 				"-m", "30M",
 				"-k", "16M",
 				"-d", isoSegDomain,
