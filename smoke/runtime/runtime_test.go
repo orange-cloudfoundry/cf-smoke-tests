@@ -59,7 +59,7 @@ var _ = Describe("Runtime:", func() {
 		It("can be pushed, scaled and deleted", func() {
 			smoke.SkipIfNotWindows(testConfig)
 
-			Expect(cf.Cf("push", appName, "-p", smoke.SimpleDotnetAppBitsPath, "-d", testConfig.AppsDomain, "-s", testConfig.GetWindowsStack(), "-b", "hwc_buildpack").Wait(testConfig.GetPushTimeout())).To(Exit(0))
+			Expect(cf.Cf("push", appName, "-p", smoke.SimpleDotnetAppBitsPath, "-s", testConfig.GetWindowsStack(), "-b", "hwc_buildpack").Wait(testConfig.GetPushTimeout())).To(Exit(0))
 
 			runPushTests(appName, appURL, expectedNullResponse, testConfig)
 		})
