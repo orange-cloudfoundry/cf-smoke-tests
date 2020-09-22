@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"time"
@@ -23,6 +24,7 @@ var _ = Describe("Runtime:", func() {
 	var appName string
 	var appURL string
 	var expectedNullResponse string
+	var manifestPath string
 
 	BeforeEach(func() {
 		appName = testConfig.RuntimeApp
@@ -37,6 +39,8 @@ var _ = Describe("Runtime:", func() {
 			expectedNullResponse, err = getBodySkipSSL(testConfig.SkipSSLValidation, appURL)
 			return err
 		}, testConfig.GetDefaultTimeout()).Should(BeNil())
+
+		manifestPath = createManifestWithRoute(appName, testConfig.AppsDomain)
 	})
 
 	AfterEach(func() {
@@ -50,7 +54,16 @@ var _ = Describe("Runtime:", func() {
 
 	Context("linux apps", func() {
 		It("can be pushed, scaled and deleted", func() {
-			Expect(cf.Cf("push", "-b", testConfig.BinaryBuildpack, "-m", "30M", "-k", "16M", appName, "-p", smoke.SimpleBinaryAppBitsPath, "-d", testConfig.AppsDomain).Wait(testConfig.GetPushTimeout())).To(Exit(0))
+
+			Expect(cf.Cf("push",
+				appName,
+				"-b", "binary_buildpack",
+				"-m", "30M",
+				"-k", "16M",
+				"-f", manifestPath,
+                "-d", testConfig.AppsDomain,
+				"-p", smoke.SimpleBinaryAppBitsPath).Wait(testConfig.GetPushTimeout())).To(Exit(0))
+
 			runPushTests(appName, appURL, expectedNullResponse, testConfig)
 		})
 	})
@@ -59,7 +72,12 @@ var _ = Describe("Runtime:", func() {
 		It("can be pushed, scaled and deleted", func() {
 			smoke.SkipIfNotWindows(testConfig)
 
-			Expect(cf.Cf("push", appName, "-p", smoke.SimpleDotnetAppBitsPath, "-s", testConfig.GetWindowsStack(), "-b", "hwc_buildpack").Wait(testConfig.GetPushTimeout())).To(Exit(0))
+			Expect(cf.Cf("push",
+				appName,
+				"-f", manifestPath,
+				"-p", smoke.SimpleDotnetAppBitsPath,
+				"-s", testConfig.GetWindowsStack(),
+				"-b", "hwc_buildpack").Wait(testConfig.GetPushTimeout())).To(Exit(0))
 
 			runPushTests(appName, appURL, expectedNullResponse, testConfig)
 		})
@@ -194,4 +212,24 @@ func getBodySkipSSL(skip bool, url string) (string, error) {
 		return "", err
 	}
 	return string(body), nil
+}
+
+func createManifestWithRoute(name string, domain string) string {
+	file, err := ioutil.TempFile(os.TempDir(), "runtime-manifest-*.yml")
+	Expect(err).NotTo(HaveOccurred())
+
+	filePath := file.Name()
+
+	_, err = file.Write([]byte(fmt.Sprintf("---\n" +
+		"applications:\n" +
+		"- name: %s\n" +
+		"  routes:\n" +
+		"  - route: %s.%s",
+		name, name, domain)))
+	Expect(err).NotTo(HaveOccurred())
+
+	err = file.Close()
+	Expect(err).NotTo(HaveOccurred())
+
+	return filePath
 }
