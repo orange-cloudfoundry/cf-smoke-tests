@@ -12,6 +12,7 @@ import (
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/generator"
 	"github.com/cloudfoundry/cf-smoke-tests/smoke"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/workflowhelpers"
 	"github.com/cloudfoundry/cf-smoke-tests/smoke/isolation_segments"
 
 	. "github.com/onsi/ginkgo"
@@ -19,8 +20,12 @@ import (
 	. "github.com/onsi/gomega/gexec"
 )
 
+var (
+	testConfig *smoke.Config
+	testSetup  *workflowhelpers.ReproducibleTestSuiteSetup
+)
+
 var _ = Describe("Runtime:", func() {
-	var testConfig = smoke.GetConfig()
 	var appName string
 	var appURL string
 	var expectedNullResponse string
@@ -150,7 +155,6 @@ func ExpectAllAppInstancesToBeReachable(appURL string, instances int, maxAttempt
 
 	branchesSeen := make([]bool, instances)
 	var sawAll bool
-	var testConfig = smoke.GetConfig()
 	for i := 0; i < maxAttempts; i++ {
 		var output string
 		Eventually(func() error {

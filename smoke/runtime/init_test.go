@@ -17,8 +17,8 @@ import (
 func TestSmokeTests(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	testConfig := smoke.GetConfig()
-	testSetup := workflowhelpers.NewSmokeTestSuiteSetup(testConfig)
+	testConfig = smoke.GetConfig()
+	testSetup = workflowhelpers.NewSmokeTestSuiteSetup(testConfig)
 
 	SynchronizedBeforeSuite(func() []byte {
 		return nil
