@@ -4,6 +4,7 @@ import (
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/generator"
 	"github.com/cloudfoundry/cf-smoke-tests/smoke"
+	"github.com/cloudfoundry/cf-smoke-tests/smoke/isolation_segments"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
@@ -14,6 +15,7 @@ var _ = Describe("Loggregator:", func() {
 	var testConfig = smoke.GetConfig()
 	var useExistingApp = testConfig.LoggingApp != ""
 	var appName string
+	var manifestPath string
 
 	Describe("cf logs", func() {
 		AfterEach(func() {
@@ -29,7 +31,13 @@ var _ = Describe("Loggregator:", func() {
 			BeforeEach(func() {
 				if !useExistingApp {
 					appName = generator.PrefixedRandomName("SMOKES", "APP")
-					Expect(cf.Cf("push", appName, "-b", testConfig.BinaryBuildpack, "-m", "30M", "-k", "16M", "-p", smoke.SimpleBinaryAppBitsPath, "-d", testConfig.AppsDomain).Wait(testConfig.GetPushTimeout())).To(Exit(0))
+					manifestPath = isolation_segments.CreateManifestWithRoute(appName, testConfig.AppsDomain)
+					Expect(cf.Cf("push", appName,
+						"-b", testConfig.BinaryBuildpack,
+						"-m", "30M",
+						"-k", "16M",
+						"-p", smoke.SimpleBinaryAppBitsPath,
+						"-f", manifestPath).Wait(testConfig.GetPushTimeout())).To(Exit(0))
 				} else {
 					appName = testConfig.LoggingApp
 				}
@@ -48,9 +56,13 @@ var _ = Describe("Loggregator:", func() {
 		Context("windows", func() {
 			BeforeEach(func() {
 				smoke.SkipIfNotWindows(testConfig)
-
 				appName = generator.PrefixedRandomName("SMOKES", "APP")
-				Expect(cf.Cf("push", appName, "-p", smoke.SimpleDotnetAppBitsPath, "-s", testConfig.GetWindowsStack(), "-b", "hwc_buildpack").Wait(testConfig.GetPushTimeout())).To(Exit(0))
+				manifestPath = isolation_segments.CreateManifestWithRoute(appName, testConfig.AppsDomain)
+				Expect(cf.Cf("push", appName,
+					"-p", smoke.SimpleDotnetAppBitsPath,
+					"-s", testConfig.GetWindowsStack(),
+					"-f", manifestPath,
+					"-b", "hwc_buildpack").Wait(testConfig.GetPushTimeout())).To(Exit(0))
 			})
 
 			It("can see app messages in the logs", func() {

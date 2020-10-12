@@ -17,7 +17,6 @@ import (
 
 func TestSmokeTests(t *testing.T) {
 	RegisterFailHandler(Fail)
-
 	testConfig = smoke.GetConfig()
 	testSetup = workflowhelpers.NewSmokeTestSuiteSetup(testConfig)
 

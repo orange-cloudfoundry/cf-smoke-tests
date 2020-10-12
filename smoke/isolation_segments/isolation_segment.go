@@ -16,6 +16,7 @@ import (
 	"github.com/cloudfoundry-incubator/cf-test-helpers/workflowhelpers"
 )
 
+
 const (
 	binaryHi          = "It just needed to be restarted!"
 	binaryAppBitsPath = "../../assets/binary"
@@ -78,6 +79,7 @@ var _ = Describe("RoutingIsolationSegments", func() {
 
 	Context("When an app is pushed to a space that has been assigned the shared isolation segment", func() {
 		BeforeEach(func() {
+			manifestPath := CreateManifestWithRoute(appName, appsDomain)
 			if testConfig.GetUseExistingOrganization() {
 				Expect(orgDefaultIsolationSegmentIsShared(orgGUID, testConfig.GetDefaultTimeout())).To(BeTrue(), "Org's default isolation segment is not the shared isolation segment")
 			}
@@ -93,6 +95,7 @@ var _ = Describe("RoutingIsolationSegments", func() {
 				"-b", testConfig.BinaryBuildpack,
 				"-m", "30M",
 				"-k", "16M",
+				"-f", manifestPath,
 				"-c", "./app"),
 				testConfig.GetPushTimeout()).Should(Exit(0))
 		})
