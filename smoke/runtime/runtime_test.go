@@ -8,24 +8,19 @@ import (
 	"regexp"
 	"strconv"
 	"time"
+	"os"
 
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/generator"
 	"github.com/cloudfoundry/cf-smoke-tests/smoke"
-	"github.com/cloudfoundry-incubator/cf-test-helpers/workflowhelpers"
-	"github.com/cloudfoundry/cf-smoke-tests/smoke/isolation_segments"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gexec"
 )
 
-var (
-	testConfig *smoke.Config
-	testSetup  *workflowhelpers.ReproducibleTestSuiteSetup
-)
-
 var _ = Describe("Runtime:", func() {
+	var testConfig = smoke.GetConfig()
 	var appName string
 	var appURL string
 	var expectedNullResponse string
@@ -45,7 +40,7 @@ var _ = Describe("Runtime:", func() {
 			return err
 		}, testConfig.GetDefaultTimeout()).Should(BeNil())
 
-		manifestPath = isolation_segments.CreateManifestWithRoute(appName, testConfig.AppsDomain)
+		manifestPath = CreateManifestWithRoute(appName, testConfig.AppsDomain)
 	})
 
 	AfterEach(func() {
@@ -61,7 +56,7 @@ var _ = Describe("Runtime:", func() {
 		It("can be pushed, scaled and deleted", func() {
 			Expect(cf.Cf("push",
 				appName,
-				"-b", "binary_buildpack",
+				"-b", testConfig.BinaryBuildpack,
 				"-m", "30M",
 				"-k", "16M",
 				"-f", manifestPath,
@@ -152,9 +147,9 @@ func ExpectAllAppInstancesToStart(appName string, instances int, maxAttempts int
 // Curls the appURL (up to maxAttempts) until all instances have been seen
 func ExpectAllAppInstancesToBeReachable(appURL string, instances int, maxAttempts int) {
 	matcher := regexp.MustCompile(`instance[ _]index["]{0,1}:[ ]{0,1}(\d+)`)
-
 	branchesSeen := make([]bool, instances)
 	var sawAll bool
+	var testConfig = smoke.GetConfig()
 	for i := 0; i < maxAttempts; i++ {
 		var output string
 		Eventually(func() error {
@@ -213,4 +208,25 @@ func getBodySkipSSL(skip bool, url string) (string, error) {
 		return "", err
 	}
 	return string(body), nil
+}
+
+
+func CreateManifestWithRoute(name string, domain string) string {
+	file, err := ioutil.TempFile(os.TempDir(), "iso-segment-manifest-*.yml")
+	Expect(err).NotTo(HaveOccurred())
+
+	filePath := file.Name()
+
+	_, err = file.Write([]byte(fmt.Sprintf("---\n" +
+		"applications:\n" +
+		"- name: %s\n" +
+		"  routes:\n" +
+		"  - route: %s.%s",
+		name, name, domain)))
+	Expect(err).NotTo(HaveOccurred())
+
+	err = file.Close()
+	Expect(err).NotTo(HaveOccurred())
+
+	return filePath
 }

@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/cloudfoundry/cf-smoke-tests/smoke"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
@@ -13,18 +12,12 @@ import (
 
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/generator"
-	"github.com/cloudfoundry-incubator/cf-test-helpers/workflowhelpers"
 )
 
 
 const (
 	binaryHi          = "It just needed to be restarted!"
 	binaryAppBitsPath = "../../assets/binary"
-)
-
-var (
-	testConfig *smoke.Config
-	testSetup  *workflowhelpers.ReproducibleTestSuiteSetup
 )
 
 var _ = Describe("RoutingIsolationSegments", func() {

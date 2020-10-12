@@ -1,11 +1,13 @@
 package logging
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
+
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/generator"
 	"github.com/cloudfoundry/cf-smoke-tests/smoke"
-	"github.com/cloudfoundry-incubator/cf-test-helpers/workflowhelpers"
-	"github.com/cloudfoundry/cf-smoke-tests/smoke/isolation_segments"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
@@ -13,12 +15,8 @@ import (
 )
 
 
-var (
-	testConfig *smoke.Config
-	testSetup  *workflowhelpers.ReproducibleTestSuiteSetup
-)
-
 var _ = Describe("Loggregator:", func() {
+	var testConfig = smoke.GetConfig()
 	var useExistingApp = testConfig.LoggingApp != ""
 	var appName string
 	var manifestPath string
@@ -37,7 +35,7 @@ var _ = Describe("Loggregator:", func() {
 			BeforeEach(func() {
 				if !useExistingApp {
 					appName = generator.PrefixedRandomName("SMOKES", "APP")
-					manifestPath = isolation_segments.CreateManifestWithRoute(appName, testConfig.AppsDomain)
+					manifestPath = CreateManifestWithRoute(appName, testConfig.AppsDomain)
 					Expect(cf.Cf("push", appName,
 						"-b", testConfig.BinaryBuildpack,
 						"-m", "30M",
@@ -63,7 +61,7 @@ var _ = Describe("Loggregator:", func() {
 			BeforeEach(func() {
 				smoke.SkipIfNotWindows(testConfig)
 				appName = generator.PrefixedRandomName("SMOKES", "APP")
-				manifestPath = isolation_segments.CreateManifestWithRoute(appName, testConfig.AppsDomain)
+				manifestPath = CreateManifestWithRoute(appName, testConfig.AppsDomain)
 				Expect(cf.Cf("push", appName,
 					"-p", smoke.SimpleDotnetAppBitsPath,
 					"-s", testConfig.GetWindowsStack(),
@@ -81,3 +79,23 @@ var _ = Describe("Loggregator:", func() {
 		})
 	})
 })
+
+func CreateManifestWithRoute(name string, domain string) string {
+	file, err := ioutil.TempFile(os.TempDir(), "iso-segment-manifest-*.yml")
+	Expect(err).NotTo(HaveOccurred())
+
+	filePath := file.Name()
+
+	_, err = file.Write([]byte(fmt.Sprintf("---\n" +
+		"applications:\n" +
+		"- name: %s\n" +
+		"  routes:\n" +
+		"  - route: %s.%s",
+		name, name, domain)))
+	Expect(err).NotTo(HaveOccurred())
+
+	err = file.Close()
+	Expect(err).NotTo(HaveOccurred())
+
+	return filePath
+}

@@ -15,8 +15,14 @@ import (
 	"github.com/cloudfoundry/cf-smoke-tests/smoke"
 )
 
+var (
+	testConfig *smoke.Config
+	testSetup  *workflowhelpers.ReproducibleTestSuiteSetup
+)
+
 func TestSmokeTests(t *testing.T) {
 	RegisterFailHandler(Fail)
+
 	testConfig = smoke.GetConfig()
 	testSetup = workflowhelpers.NewSmokeTestSuiteSetup(testConfig)
 
